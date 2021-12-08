@@ -1,0 +1,10 @@
+# Ignore everything.
+**
+
+# Include these files.
+!package.json
+!package-lock.json
+
+# Include these directories.
+!src
+!public

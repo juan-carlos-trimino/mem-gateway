@@ -1,0 +1,38 @@
+# Ignore everything.
+**
+
+# But include these files...
+!.gitignore
+!LICENSE
+!README.md
+
+# ... and these files under the 'gateway' directory...
+!gateway/
+gateway/*
+!gateway/.dockerignore
+!gateway/Dockerfile-dev
+!gateway/Dockerfile-prod
+!gateway/package.json
+!gateway/package-lock.json
+# ... and these directories...
+!gateway/src
+gateway/src/*
+!gateway/src/index.js
+#
+!gateway/src/views
+gateway/src/views/*
+!gateway/src/views/history.hbs
+!gateway/src/views/play-video.hbs
+!gateway/src/views/upload-video.hbs
+!gateway/src/views/video-list.hbs
+#
+!gateway/public
+gateway/public/*
+!gateway/public/css
+gateway/public/css/*
+!gateway/public/css/app.css
+!gateway/public/css/tailwind.min.css
+#
+!gateway/public/js
+gateway/public/js/*
+!gateway/public/js/upload.js

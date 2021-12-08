@@ -1,0 +1,12 @@
+FROM node:12.18.1-alpine
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+COPY ./src ./src
+COPY ./public ./public
+
+# Install only the production dependencies using npm.
+RUN npm install --only=production
+
+CMD npm start
