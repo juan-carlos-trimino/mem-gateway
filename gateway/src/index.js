@@ -3,10 +3,10 @@ Gateway/Reverse Proxy
 The gateway is the entry point to the app; it provides a REST API so the front end can interact
 with the backend.
 ***/
-const express = require("express");
-const path = require("path");
-const http = require("http");
-const crypto = require("crypto");
+const express = require('express');
+const path = require('path');
+const http = require('http');
+const { randomUUID } = require('crypto');
 const winston = require('winston');
 
 /******
@@ -28,9 +28,9 @@ Resume Operation
 The resume operation strategy intercepts unexpected errors and responds by allowing the process to
 continue.
 ***/
-process.on("uncaughtException",
+process.on('uncaughtException',
 err => {
-  console.error("Uncaught exception:");
+  console.error('Uncaught exception:');
   console.error(err && err.stack || err);
 })
 
@@ -127,7 +127,6 @@ app.get('/readiness',
     path: '/readiness',
     method: 'GET'
   };
-  console.log(`Connecting to "metadata" at ${SVC_DNS_METADATA}.`);
   //Check upstream dependencies.
   http.request(options,
   (response) => {
@@ -153,7 +152,7 @@ app.get('/readiness',
 //Main web page for listing videos.
 app.get('/',
 (req, res) => {
-  const cid = crypto.randomUUID();
+  const cid = randomUUID();
   const options = {
     host: SVC_DNS_METADATA,
     path: '/videos',
