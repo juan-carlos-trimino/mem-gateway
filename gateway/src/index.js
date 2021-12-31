@@ -30,18 +30,16 @@ continue.
 ***/
 process.on('uncaughtException',
 err => {
-  console.error('Uncaught exception:');
-  console.error(err && err.stack || err);
+  logger.error('Uncaught exception:');
+  logger.error(err && err.stack || err);
 })
 
 //Winston requires at least one transport (location to save the log) to create a log.
 const logConfiguration = {
   transports: [ new winston.transports.Console() ],
   format: winston.format.combine(
-    winston.format.label({ label: path.basename(__filename) }),
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSSSS' }),
-    //winston.format.printf(msg => `[${msg.timestamp}] [${correlationId}] [${msg.level}] [${msg.label}] ${msg.message}`)
-    winston.format.printf(msg => `[${msg.timestamp}] [${msg.level}] [${msg.label}] ${msg.message}`)
+    winston.format.printf(msg => `[${msg.timestamp}] [${msg.level}] ${msg.message}`)
   ),
   exitOnError: false
 }
@@ -73,11 +71,11 @@ if (require.main === module) {
   main()
   .then(() => {
     READINESS_PROBE = true;
-    console.log(`Microservice "gateway" is listening on port "${PORT}"!`);
+    logger.info(`Microservice "gateway" is listening on port "${PORT}"!`);
   })
   .catch(err => {
-    console.error('Microservice "gateway" failed to start.');
-    console.error(err && err.stack || err);
+    logger.error('Microservice "gateway" failed to start.');
+    logger.error(err && err.stack || err);
   });
 }
 
@@ -98,11 +96,11 @@ function main() {
   //Display a message if any optional environment variables are missing.
   else {
     if (process.env.PORT === undefined) {
-      console.log('The environment variable PORT for the "HTTP server" is missing; using port 3000.');
+      logger.info('The environment variable PORT for the "HTTP server" is missing; using port 3000.');
     }
     //
     if (process.env.MAX_RETRIES === undefined) {
-      console.log(`The environment variable MAX_RETRIES is missing; using MAX_RETRIES=${MAX_RETRIES}.`);
+      logger.info(`The environment variable MAX_RETRIES is missing; using MAX_RETRIES=${MAX_RETRIES}.`);
     }
   }
   //Notify when server has started.
@@ -136,14 +134,14 @@ app.get('/readiness',
     }
     else {
       READINESS_PROBE = false;
-      console.log(`Upstream dependency ${SVC_DNS_METADATA} not ready.`);
+      logger.info(`Upstream dependency ${SVC_DNS_METADATA} not ready.`);
       res.sendStatus(500);
     }
   })
   .on('error',
   err => {
     READINESS_PROBE = false;
-    console.log(`Upstream dependency ${SVC_DNS_METADATA} not ready.`);
+    logger.info(`Upstream dependency ${SVC_DNS_METADATA} not ready.`);
     res.sendStatus(500);
   })
   .end();  //Finalize the request.
@@ -161,7 +159,7 @@ app.get('/',
       'X-Correlation-Id': cid
     }
   };
-  logger.info('Starting the request: List the Videos.');
+  logger.info(`[${cid}] Starting the request: List the Videos.`);
   //Get the list of videos from the metadata microservice.
   http.request(options,
   (response) => {
@@ -198,15 +196,15 @@ app.get('/',
     });
     response.on('error',
     err => {
-      console.error('Failed to get the video list.');
-      console.error(err || `Status code: ${response.statusCode}`);
+      logger.error(`[${cid}] Failed to get the video list.`);
+      logger.error(`[${cid}] [${err}]` || `[${cid}] Status code: ${response.statusCode}`);
       res.sendStatus(500);
     });
   })
   .on('error',
   err => {
-    console.error('Failed to get the video list.');
-    console.error(err || `Status code: ${response.statusCode}`);
+    logger.error(`[${cid}] Failed to get the video list.`);
+    logger.error(`[${cid}] [${err}]` || `[${cid}] Status code: ${response.statusCode}`);
     res.sendStatus(500);
   })
   .end();
@@ -215,13 +213,17 @@ app.get('/',
 //Web page for playing a particular video.
 app.get('/video',
 (req, res) => {
+  const cid = randomUUID();
   const videoId = req.query.id;
-  console.log(`Request video ${videoId} to play.`);
+  logger.info(`[${cid}] Starting the request: Play Video ${videoId}.`);
   //Get the selected video from the metadata microservice.
   http.request({
     host: SVC_DNS_METADATA,
     path: `/video?id=${videoId}`,
-    method: 'GET'
+    method: 'GET',
+    headers: {
+      'X-Correlation-Id': cid
+    }
   },
   (response) => {
     let data = '';
@@ -238,13 +240,13 @@ app.get('/video',
         res.render('play-video', { video });
       }
       catch {
-        console.error(`Failed to get details for video ${videoId}.`);
+        logger.error(`[${cid}] Failed to get details for video ${videoId}.`);
       }
     });
     response.on("error",
     err => {
-      console.error(`Failed to get details for video ${videoId}.`);
-      console.error(err || `Status code: ${response.statusCode}`);
+      logger.error(`[${cid}] Failed to get details for video ${videoId}.`);
+      logger.error(`[${cid}] [${err}]` || `[${cid}] Status code: ${response.statusCode}`);
       res.sendStatus(500);
     });
   })
@@ -260,12 +262,16 @@ app.get('/upload',
 //Web page for showing the users viewing history.
 app.get('/history',
 (req, res) => {
-  console.log('Request viewing history.');
+  const cid = randomUUID();
+  logger.info(`[${cid}] Starting the request: Viewing History.`);
   //Get the viewing history from the history microservice.
   http.request({
     host: SVC_DNS_HISTORY,
     path: '/videos',
-    method: 'GET'
+    method: 'GET',
+    headers: {
+      'X-Correlation-Id': cid
+    }
   },
   (response) => {
     let data = '';
@@ -288,8 +294,8 @@ app.get('/history',
     });
     response.on('error',
     err => {
-      console.error('Failed to get history.');
-      console.error(err || `Status code: ${response.statusCode}`);
+      logger.error(`[${cid}] Failed to get history.`);
+      logger.error(`[${cid}] [${err}]` || `[${cid}] Status code: ${response.statusCode}`);
       res.sendStatus(500);
     });
   })
@@ -299,12 +305,16 @@ app.get('/history',
 //HTTP GET API to stream video to the user's browser.
 app.get('/api/video',
 (req, res) => {
-  console.log(`Stream video ${req.query.id} to the browser.`);
+  const cid = randomUUID();
+  logger.info(`[${cid}] Starting the request: Stream video ${req.query.id}.`);
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_STREAMING,
     path: `/video?id=${req.query.id}`,
-    method: 'GET'
+    method: 'GET',
+    headers: {
+      'X-Correlation-Id': cid
+    }
   },
   forwardRes => {
     res.writeHeader(forwardRes.statusCode, forwardRes.headers);
@@ -316,6 +326,9 @@ app.get('/api/video',
 //HTTP POST API to upload video from the user's browser.
 app.post('/api/upload',
 (req, res) => {
+  const cid = randomUUID();
+  logger.info(`[${cid}] Starting the request: Upload Video ${req.headers['file-name']}.`);
+  req.set('X-Correlation-Id', cid);
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_UPLOAD,
@@ -341,6 +354,8 @@ the stack (below all other functions) to handle a 404 response.
 ***/
 app.use(
 (req, res, next) => {
-  console.error(`Unable to find the requested resource (${req.url})!`);
+  logger.error(`Unable to find the requested resource (${req.url})!`);
   res.status(404).send(`<h1>Unable to find the requested resource (${req.url})!</h1>`);
 });
+
+module.exports = logger;
