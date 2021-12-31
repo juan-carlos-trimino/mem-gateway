@@ -6,6 +6,8 @@ with the backend.
 const express = require("express");
 const path = require("path");
 const http = require("http");
+const crypto = require("crypto");
+const winston = require('winston');
 
 /******
 Globals
@@ -31,6 +33,21 @@ err => {
   console.error("Uncaught exception:");
   console.error(err && err.stack || err);
 })
+
+//Winston requires at least one transport (location to save the log) to create a log.
+const logConfiguration = {
+  transports: [ new winston.transports.Console() ],
+  format: winston.format.combine(
+    winston.format.label({ label: path.basename(__filename) }),
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSSSS' }),
+    //winston.format.printf(msg => `[${msg.timestamp}] [${correlationId}] [${msg.level}] [${msg.label}] ${msg.message}`)
+    winston.format.printf(msg => `[${msg.timestamp}] [${msg.level}] [${msg.label}] ${msg.message}`)
+  ),
+  exitOnError: false
+}
+
+//Create a logger and pass it the Winston configuration object.
+const logger = winston.createLogger(logConfiguration);
 
 /***
 Abort and Restart
@@ -136,12 +153,16 @@ app.get('/readiness',
 //Main web page for listing videos.
 app.get('/',
 (req, res) => {
-  console.log('List the videos.');
+  const cid = crypto.randomUUID();
   const options = {
     host: SVC_DNS_METADATA,
     path: '/videos',
-    method: 'GET'
+    method: 'GET',
+    headers: {
+      'X-Correlation-Id': cid
+    }
   };
+  logger.info('Starting the request: List the Videos.');
   //Get the list of videos from the metadata microservice.
   http.request(options,
   (response) => {
