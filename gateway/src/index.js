@@ -328,7 +328,7 @@ app.post('/api/upload',
 (req, res) => {
   const cid = randomUUID();
   logger.info(`[${cid}] Starting the request: Upload Video ${req.headers['file-name']}.`);
-  req.set('X-Correlation-Id', cid);
+  req.headers['X-Correlation-Id'] = cid;
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_UPLOAD,
@@ -357,5 +357,3 @@ app.use(
   logger.error(`Unable to find the requested resource (${req.url})!`);
   res.status(404).send(`<h1>Unable to find the requested resource (${req.url})!</h1>`);
 });
-
-module.exports = logger;
