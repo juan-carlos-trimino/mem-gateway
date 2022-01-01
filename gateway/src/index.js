@@ -35,6 +35,17 @@ err => {
   logger.error(err && err.stack || err);
 })
 
+/***
+Abort and Restart
+-----------------
+***/
+// process.on("uncaughtException",
+// err => {
+//   console.error("Uncaught exception:");
+//   console.error(err && err.stack || err);
+//   process.exit(1);
+// })
+
 //Winston requires at least one transport (location to save the log) to create a log.
 const logConfiguration = {
   transports: [ new winston.transports.Console() ],
@@ -47,17 +58,6 @@ const logConfiguration = {
 
 //Create a logger and pass it the Winston configuration object.
 const logger = winston.createLogger(logConfiguration);
-
-/***
-Abort and Restart
------------------
-***/
-// process.on("uncaughtException",
-// err => {
-//   console.error("Uncaught exception:");
-//   console.error(err && err.stack || err);
-//   process.exit(1);
-// })
 
 /***
 Unlike most other programming languages or runtime environments, Node.js doesn't have a built-in
@@ -97,7 +97,7 @@ function main() {
   //Display a message if any optional environment variables are missing.
   else {
     if (process.env.PORT === undefined) {
-      logger.info(`${SVC_NAME} - The environment variable PORT for the "HTTP server" is missing; using port 3000.`);
+      logger.info(`${SVC_NAME} - The environment variable PORT for the HTTP server is missing; using port ${PORT}.`);
     }
     //
     if (process.env.MAX_RETRIES === undefined) {
@@ -198,14 +198,14 @@ app.get('/',
     response.on('error',
     err => {
       logger.error(`${SVC_NAME} ${cid} - Failed to get the video list.`);
-      logger.error(`${SVC_NAME} ${cid} - ${err}` || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
+      logger.error(err || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
       res.sendStatus(500);
     });
   })
   .on('error',
   err => {
     logger.error(`${SVC_NAME} ${cid} - Failed to get the video list.`);
-    logger.error(`${SVC_NAME} ${cid} - ${err}` || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
+    logger.error(err || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
     res.sendStatus(500);
   })
   .end();
@@ -247,7 +247,7 @@ app.get('/video',
     response.on("error",
     err => {
       logger.error(`${SVC_NAME} ${cid} - Failed to get details for video ${videoId}.`);
-      logger.error(`${SVC_NAME} ${cid} - ${err}` || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
+      logger.error(err || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
       res.sendStatus(500);
     });
   })
@@ -296,7 +296,7 @@ app.get('/history',
     response.on('error',
     err => {
       logger.error(`${SVC_NAME} ${cid} - Failed to get history.`);
-      logger.error(`${SVC_NAME} ${cid} - ${err}` || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
+      logger.error(err || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
       res.sendStatus(500);
     });
   })
