@@ -32,7 +32,8 @@ continue.
 process.on('uncaughtException',
 err => {
   logger.error(`${SVC_NAME} - Uncaught exception.`);
-  logger.error(err && err.stack || err);
+  logger.error(`${SVC_NAME} - ${err}`);
+  logger.error(`${SVC_NAME} - ${err.stack}`);
 })
 
 /***
@@ -76,7 +77,8 @@ if (require.main === module) {
   })
   .catch(err => {
     logger.error(`${SVC_NAME} - Microservice failed to start.`);
-    logger.error(err && err.stack || err);
+    logger.error(`${SVC_NAME} - ${err}`);
+    logger.error(`${SVC_NAME} - ${err.stack}`);
   });
 }
 
@@ -152,6 +154,7 @@ app.get('/readiness',
 app.get('/',
 (req, res) => {
   const cid = randomUUID();
+  logger.info(`${SVC_NAME} ${cid} - Received request for the "List the Videos".`);
   const options = {
     host: SVC_DNS_METADATA,
     path: '/videos',
@@ -160,7 +163,6 @@ app.get('/',
       'X-Correlation-Id': cid
     }
   };
-  logger.info(`${SVC_NAME} ${cid} - Starting the request: List the Videos.`);
   //Get the list of videos from the metadata microservice.
   http.request(options,
   (response) => {
@@ -185,10 +187,7 @@ app.get('/',
         The null value 'null'
       ***/
       //Render the video list for display in the browser.
-      if (response.statusCode === 500) {
-        res.render('video-list', { videos: JSON.parse('[]') });
-      }
-      else if (data === undefined || data === null || data === '') {
+      if (response.statusCode === 500 || data === undefined || data === null || data === '') {
         res.render('video-list', { videos: JSON.parse('[]') });
       }
       else {
@@ -197,15 +196,15 @@ app.get('/',
     });
     response.on('error',
     err => {
-      logger.error(`${SVC_NAME} ${cid} - Failed to get the video list.`);
-      logger.error(err || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
+      logger.error(`${SVC_NAME} ${cid} - Failed to retrieve the video collection.`);
+      logger.error(`${SVC_NAME} ${cid} - ${err}`);
       res.sendStatus(500);
     });
   })
   .on('error',
   err => {
-    logger.error(`${SVC_NAME} ${cid} - Failed to get the video list.`);
-    logger.error(err || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
+    logger.error(`${SVC_NAME} ${cid} - Failed to retrieve the video collection.`);
+    logger.error(`${SVC_NAME} ${cid} - ${err}`);
     res.sendStatus(500);
   })
   .end();
@@ -264,7 +263,7 @@ app.get('/upload',
 app.get('/history',
 (req, res) => {
   const cid = randomUUID();
-  logger.info(`${SVC_NAME} ${cid} - Starting the request: Viewing History.`);
+  logger.info(`${SVC_NAME} ${cid} - Received request for the "Viewing History".`);
   //Get the viewing history from the history microservice.
   http.request({
     host: SVC_DNS_HISTORY,
@@ -283,10 +282,7 @@ app.get('/history',
     response.on('end',
     () => {
       //Render the history for display in the browser.
-      if (response.statusCode === 500) {
-        res.render('history', { videos: JSON.parse('[]') });
-      }
-      else if (data === undefined || data === null || data === '') {
+      if (response.statusCode === 500 || data === undefined || data === null || data === '') {
         res.render('history', { videos: JSON.parse('[]') });
       }
       else {
@@ -295,8 +291,8 @@ app.get('/history',
     });
     response.on('error',
     err => {
-      logger.error(`${SVC_NAME} ${cid} - Failed to get history.`);
-      logger.error(err || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
+      logger.error(`${SVC_NAME} ${cid} - Failed to retrieve the viewing history.`);
+      logger.error(`${SVC_NAME} ${cid} - ${err}`);
       res.sendStatus(500);
     });
   })
@@ -307,7 +303,7 @@ app.get('/history',
 app.get('/api/video',
 (req, res) => {
   const cid = randomUUID();
-  logger.info(`${SVC_NAME} ${cid} - Starting the request: Stream video ${req.query.id}.`);
+  logger.info(`${SVC_NAME} ${cid} - Received request for "Streaming the Video ${req.query.id}".`);
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_STREAMING,
@@ -328,7 +324,7 @@ app.get('/api/video',
 app.post('/api/upload',
 (req, res) => {
   const cid = randomUUID();
-  logger.info(`${SVC_NAME} ${cid} - Starting the request: Upload Video ${req.headers['file-name']}.`);
+  logger.info(`${SVC_NAME} ${cid} - Received request for the "Upload of the Video ${req.headers['file-name']}".`);
   req.headers['X-Correlation-Id'] = cid;
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
