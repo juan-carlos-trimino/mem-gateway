@@ -324,8 +324,8 @@ app.get('/api/video',
 app.post('/api/upload',
 (req, res) => {
   const cid = randomUUID();
-  logger.info(`${SVC_NAME} ${cid} - Received request for the "Upload of the Video ${req.headers['file-name']}".`);
   req.headers['X-Correlation-Id'] = cid;
+  logger.info(`${SVC_NAME} ${req.headers['X-Correlation-Id']} - Received request for the "Upload of the Video ${req.headers['file-name']}".`);
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_UPLOAD,
