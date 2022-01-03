@@ -155,6 +155,11 @@ app.get('/',
 (req, res) => {
   const cid = randomUUID();
   logger.info(`${SVC_NAME} ${cid} - Received request for the "List the Videos".`);
+  /***
+  In the HTTP protocol, headers are case-insensitive; however, the Express framework converts
+  everything to lower case. Unfortunately, for objects in JavaScript, their property names are
+  case-sensitive.
+  ***/
   const options = {
     host: SVC_DNS_METADATA,
     path: '/videos',
@@ -324,6 +329,11 @@ app.get('/api/video',
 app.post('/api/upload',
 (req, res) => {
   const cid = randomUUID();
+  /***
+  In the HTTP protocol, headers are case-insensitive; however, the Express framework converts
+  everything to lower case. Unfortunately, for objects in JavaScript, their property names are
+  case-sensitive.
+  ***/
   req.headers['x-correlation-id'] = cid;
   logger.info(`${SVC_NAME} ${req.headers['x-correlation-id']} - Received request for the "Upload of the Video ${req.headers['file-name']}".`);
   //Forward the request to the video streaming microservice.
