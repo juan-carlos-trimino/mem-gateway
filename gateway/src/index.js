@@ -160,7 +160,7 @@ app.get('/',
     path: '/videos',
     method: 'GET',
     headers: {
-      'X-Correlation-Id': cid
+      'x-correlation-id': cid
     }
   };
   //Get the list of videos from the metadata microservice.
@@ -222,7 +222,7 @@ app.get('/video',
     path: `/video?id=${videoId}`,
     method: 'GET',
     headers: {
-      'X-Correlation-Id': cid
+      'x-correlation-id': cid
     }
   },
   (response) => {
@@ -270,7 +270,7 @@ app.get('/history',
     path: '/videos',
     method: 'GET',
     headers: {
-      'X-Correlation-Id': cid
+      'x-correlation-id': cid
     }
   },
   (response) => {
@@ -310,7 +310,7 @@ app.get('/api/video',
     path: `/video?id=${req.query.id}`,
     method: 'GET',
     headers: {
-      'X-Correlation-Id': cid
+      'x-correlation-id': cid
     }
   },
   forwardRes => {
@@ -324,8 +324,8 @@ app.get('/api/video',
 app.post('/api/upload',
 (req, res) => {
   const cid = randomUUID();
-  req.headers['X-Correlation-Id'] = cid;
-  logger.info(`${SVC_NAME} ${req.headers['X-Correlation-Id']} - Received request for the "Upload of the Video ${req.headers['file-name']}".`);
+  req.headers['x-correlation-id'] = cid;
+  logger.info(`${SVC_NAME} ${req.headers['x-correlation-id']} - Received request for the "Upload of the Video ${req.headers['file-name']}".`);
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_UPLOAD,
