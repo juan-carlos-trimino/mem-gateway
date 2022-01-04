@@ -150,7 +150,12 @@ app.get('/readiness',
   .end();  //Finalize the request.
 });
 
-//Main web page for listing videos.
+/***
+Main web page for listing videos.
+
+This route handler starts by requesting data from the metadata microservice. It then renders the
+web page using the video-list template and input the list of videos as the template's data.
+***/
 app.get('/',
 (req, res) => {
   const cid = randomUUID();
@@ -191,7 +196,10 @@ app.get('/',
         The boolean value false 'false'
         The null value 'null'
       ***/
-      //Render the video list for display in the browser.
+      /***
+      It renders a web page using the video-list template. It passes the array of videos in as the
+      data for rendering the template.
+      ***/
       if (response.statusCode === 500 || data === undefined || data === null || data === '') {
         res.render('video-list', { videos: JSON.parse('[]') });
       }
@@ -215,12 +223,17 @@ app.get('/',
   .end();
 });
 
-//Web page for playing a particular video.
+/***
+Web page for playing a particular video.
+
+The streaming video passes through three microservices on its journey to the user.
+External Cloud Storage -> video-storage -> video-streaming -> gateway -> web browser -> user
+***/
 app.get('/video',
 (req, res) => {
   const cid = randomUUID();
   const videoId = req.query.id;
-  logger.info(`${SVC_NAME} ${cid} - Starting the request: Play Video ${videoId}.`);
+  logger.info(`${SVC_NAME} ${cid} - Received the request: "Play Video ${videoId}".`);
   //Get the selected video from the metadata microservice.
   http.request({
     host: SVC_DNS_METADATA,
@@ -241,6 +254,7 @@ app.get('/video',
       try {
         const metadata = JSON.parse(data).video;
         const video = { metadata, url: `/api/video?id=${videoId}` };
+        logger.info(`${SVC_NAME} ${cid} - Rendering the video ${metadata._id}`);
         //Render the video for display in the browser.
         res.render('play-video', { video });
       }
@@ -320,6 +334,10 @@ app.get('/api/video',
   },
   forwardRes => {
     res.writeHeader(forwardRes.statusCode, forwardRes.headers);
+    /***
+    It pipes the response (using Node.js streams) from the video-streaming microservice to the
+    response for this request. This is where the video leaves the cluster.
+    ***/
     forwardRes.pipe(res);
   });
   req.pipe(forwardReq);
@@ -345,8 +363,15 @@ app.post('/api/upload',
   },
   forwardRes => {
     res.writeHeader(forwardRes.statusCode, forwardRes.headers);
+    /***
+    It pipes the response (using Node.js streams) from the video-upload microservice to the
+    response for this request.
+    ***/
     forwardRes.pipe(res);
   });
+  /***
+  It pipes the request itself (the body of the request is the video) to another request.
+  ***/
   req.pipe(forwardReq);
 });
 
