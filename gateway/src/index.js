@@ -6,8 +6,9 @@ with the backend.
 const express = require('express');
 const path = require('path');
 const http = require('http');
-const { randomUUID } = require('crypto');
 const winston = require('winston');
+const { randomUUID } = require('crypto');
+const { lookup } = require('geoip-lite');
 
 /******
 Globals
