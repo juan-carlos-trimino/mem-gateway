@@ -14,6 +14,9 @@ Globals
 ******/
 //Create a new express instance.
 const app = express();
+//When running an Express app behind a proxy, set the application variable 'trust proxy' to 'true.'
+app.set('trust proxy', true);
+//
 const SVC_NAME = "gateway";
 const SVC_DNS_METADATA = process.env.SVC_DNS_METADATA;
 const SVC_DNS_HISTORY = process.env.SVC_DNS_HISTORY;
@@ -120,6 +123,29 @@ function main() {
   });
 }
 
+/***
+The user IP is determined by the following order:
+ 1. X-Client-IP
+ 2. X-Forwarded-For (Header may return multiple IP addresses in the format: "client IP, proxy1 IP, proxy2 IP", so take the the first one.)
+    It's very easy to spoof:
+    $ curl --header "X-Forwarded-For: 1.2.3.4" "http://localhost:3000"
+ 3. CF-Connecting-IP (Cloudflare)
+ 4. Fastly-Client-Ip (Fastly CDN and Firebase hosting header when forwared to a cloud function)
+ 5. True-Client-Ip (Akamai and Cloudflare)
+ 6. X-Real-IP (Nginx proxy/FastCGI)
+ 7. X-Cluster-Client-IP (Rackspace LB, Riverbed Stingray)
+ 8. X-Forwarded, Forwarded-For and Forwarded (Variations of #2)
+ 9. req.connection.remoteAddress
+10. req.socket.remoteAddress
+11. req.connection.socket.remoteAddress
+12. req.info.remoteAddress
+If an IP address cannot be found, it will return null.
+***/
+function getIP(req) {
+  return req.headers['x-forwarded-for']?.split(',').shift() ||
+         req.socket?.remoteAddress || null;
+}
+
 //Readiness probe.
 app.get('/readiness',
 (req, res) => {
@@ -159,7 +185,15 @@ web page using the video-list template and input the list of videos as the templ
 app.get('/',
 (req, res) => {
   const cid = randomUUID();
-  logger.info(`${SVC_NAME} ${cid} - Received request for the "List the Videos".`);
+  const ip = getIP(req);
+  logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "List the Videos."`);
+  try {
+    const geo = lookup(ip);
+    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  }
+  catch {
+    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  }
   /***
   In the HTTP protocol, headers are case-insensitive; however, the Express framework converts
   everything to lower case. Unfortunately, for objects in JavaScript, their property names are
@@ -233,7 +267,15 @@ app.get('/video',
 (req, res) => {
   const cid = randomUUID();
   const videoId = req.query.id;
-  logger.info(`${SVC_NAME} ${cid} - Received the request: "Play Video ${videoId}".`);
+  const ip = getIP(req);
+  logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "Play Video ${videoId}".`);
+  try {
+    const geo = lookup(ip);
+    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  }
+  catch {
+    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  }
   //Get the selected video from the metadata microservice.
   http.request({
     host: SVC_DNS_METADATA,
@@ -282,7 +324,15 @@ app.get('/upload',
 app.get('/history',
 (req, res) => {
   const cid = randomUUID();
-  logger.info(`${SVC_NAME} ${cid} - Received request for the "Viewing History".`);
+  const ip = getIP(req);
+  logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "Viewing History."`);
+  try {
+    const geo = lookup(ip);
+    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  }
+  catch {
+    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  }
   //Get the viewing history from the history microservice.
   http.request({
     host: SVC_DNS_HISTORY,
@@ -322,7 +372,15 @@ app.get('/history',
 app.get('/api/video',
 (req, res) => {
   const cid = randomUUID();
-  logger.info(`${SVC_NAME} ${cid} - Received request for "Streaming the Video ${req.query.id}".`);
+  const ip = getIP(req);
+  logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "Streaming the Video ${req.query.id}."`);
+  try {
+    const geo = lookup(ip);
+    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  }
+  catch {
+    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  }
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_STREAMING,
@@ -353,7 +411,15 @@ app.post('/api/upload',
   case-sensitive.
   ***/
   req.headers['x-correlation-id'] = cid;
-  logger.info(`${SVC_NAME} ${req.headers['x-correlation-id']} - Received request for the "Upload of the Video ${req.headers['file-name']}".`);
+  const ip = getIP(req);
+  logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "Upload of the Video ${req.headers['file-name']}".`);
+  try {
+    const geo = lookup(ip);
+    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  }
+  catch {
+    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  }
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_UPLOAD,
