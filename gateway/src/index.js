@@ -143,8 +143,28 @@ The user IP is determined by the following order:
 If an IP address cannot be found, it will return null.
 ***/
 function getIP(req) {
-  return req.headers['x-forwarded-for']?.split(',').shift() ||
-         req.socket?.remoteAddress || null;
+  let ip = null;
+  try {
+    ip = req.headers['x-forwarded-for']?.split(',').shift() || req.socket?.remoteAddress || null;
+    if (ip.endsWith(':')) {
+      ip = ip.substring(0, ip.length - 1);
+    }
+    /***
+    When the OS is listening with a hybrid IPv4-IPv6 socket, the socket converts an IPv4 address to
+    IPv6 by embedding it within the IPv4-mapped IPv6 address format. This format just prefixes the
+    IPv4 address with :ffff: (or ::ffff: for older mappings).
+    Is the IP an IPv4 address mapped as an IPv6? If yes, extract the Ipv4.
+    ***/
+    const regex = /^:{1,2}(ffff)?:(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/i;  //Ignore case.
+    if (ip !== null && regex.test(ip)) {
+      ip = ip.replace(/^.*:/, '');
+    }
+  }
+  catch (err) {
+    ip = null;
+    logger.error(`${SVC_NAME} ${cid} - ${err}`);
+  }
+  return ip;
 }
 
 //Readiness probe.
