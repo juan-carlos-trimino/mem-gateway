@@ -145,7 +145,7 @@ If an IP address cannot be found, it will return null.
 function getIP(req) {
   let ip = null;
   try {
-    console.info(`........${req.headers['x-forwarded-for']}`);
+    console.info(`........${req.id}.....${req.ids}`);
     ip = req.headers['x-forwarded-for']?.split(',').shift() || req.socket?.remoteAddress || null;
     /***
     When the OS is listening with a hybrid IPv4-IPv6 socket, the socket converts an IPv4 address to
