@@ -145,10 +145,8 @@ If an IP address cannot be found, it will return null.
 function getIP(req) {
   let ip = null;
   try {
+    console.info(`........${req.headers['x-forwarded-for']}`);
     ip = req.headers['x-forwarded-for']?.split(',').shift() || req.socket?.remoteAddress || null;
-    if (ip.endsWith(':')) {
-      ip = ip.substring(0, ip.length - 1);
-    }
     /***
     When the OS is listening with a hybrid IPv4-IPv6 socket, the socket converts an IPv4 address to
     IPv6 by embedding it within the IPv4-mapped IPv6 address format. This format just prefixes the
