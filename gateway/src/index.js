@@ -145,7 +145,6 @@ If an IP address cannot be found, it will return null.
 function getIP(req) {
   let ip = null;
   try {
-    console.info(`........${req.id}.....${req.headers.origin}.....${req.headers['x-forwarded-for']}`);
     ip = req.headers['x-forwarded-for']?.split(',').shift() || req.socket?.remoteAddress || null;
     /***
     When the OS is listening with a hybrid IPv4-IPv6 socket, the socket converts an IPv4 address to
@@ -206,13 +205,13 @@ app.get('/',
   const cid = randomUUID();
   const ip = getIP(req);
   logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "List the Videos."`);
-  try {
-    const geo = lookup(ip);
-    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
-  }
-  catch {
-    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
-  }
+  // try {
+  //   const geo = lookup(ip);
+  //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  // }
+  // catch {
+  //   logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  // }
   /***
   In the HTTP protocol, headers are case-insensitive; however, the Express framework converts
   everything to lower case. Unfortunately, for objects in JavaScript, their property names are
@@ -288,13 +287,13 @@ app.get('/video',
   const videoId = req.query.id;
   const ip = getIP(req);
   logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "Play Video ${videoId}".`);
-  try {
-    const geo = lookup(ip);
-    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
-  }
-  catch {
-    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
-  }
+  // try {
+  //   const geo = lookup(ip);
+  //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  // }
+  // catch {
+  //   logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  // }
   //Get the selected video from the metadata microservice.
   http.request({
     host: SVC_DNS_METADATA,
@@ -345,13 +344,13 @@ app.get('/history',
   const cid = randomUUID();
   const ip = getIP(req);
   logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "Viewing History."`);
-  try {
-    const geo = lookup(ip);
-    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
-  }
-  catch {
-    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
-  }
+  // try {
+  //   const geo = lookup(ip);
+  //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  // }
+  // catch {
+  //   logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  // }
   //Get the viewing history from the history microservice.
   http.request({
     host: SVC_DNS_HISTORY,
@@ -393,13 +392,13 @@ app.get('/api/video',
   const cid = randomUUID();
   const ip = getIP(req);
   logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "Streaming the Video ${req.query.id}."`);
-  try {
-    const geo = lookup(ip);
-    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
-  }
-  catch {
-    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
-  }
+  // try {
+  //   const geo = lookup(ip);
+  //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  // }
+  // catch {
+  //   logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  // }
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_STREAMING,
@@ -432,13 +431,13 @@ app.post('/api/upload',
   req.headers['x-correlation-id'] = cid;
   const ip = getIP(req);
   logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: "Upload of the Video ${req.headers['file-name']}".`);
-  try {
-    const geo = lookup(ip);
-    logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
-  }
-  catch {
-    logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
-  }
+  // try {
+  //   const geo = lookup(ip);
+  //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  // }
+  // catch {
+  //   logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  // }
   //Forward the request to the video streaming microservice.
   const forwardReq = http.request({
     host: SVC_DNS_VIDEO_UPLOAD,
