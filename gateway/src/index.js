@@ -485,12 +485,12 @@ app.get('/kibana',
   // }
   //Get the selected video from the metadata microservice.
   http.request({
-    host: SVC_DNS_KIBANA,
+    host: `http://${SVC_DNS_KIBANA}`,
     // path: '/app/kibana#/management',
-    method: 'GET',
-    headers: {
-      'x-correlation-id': cid
-    }
+    // method: 'GET',
+    // headers: {
+    //   'x-correlation-id': cid
+    // }
   },
   (response) => {
     // let data = '';
