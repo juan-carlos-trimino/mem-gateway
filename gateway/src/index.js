@@ -486,7 +486,8 @@ app.get('/kibana',
   //Get the selected video from the metadata microservice.
   http.request({
     host: SVC_DNS_KIBANA,
-    method: 'GET',
+    path: '/_plugin/kibana/app/dashboards#',
+    method: 'POST',
     headers: {
       'x-correlation-id': cid
     }
