@@ -23,6 +23,7 @@ const SVC_DNS_METADATA = process.env.SVC_DNS_METADATA;
 const SVC_DNS_HISTORY = process.env.SVC_DNS_HISTORY;
 const SVC_DNS_VIDEO_UPLOAD = process.env.SVC_DNS_VIDEO_UPLOAD;
 const SVC_DNS_VIDEO_STREAMING = process.env.SVC_DNS_VIDEO_STREAMING;
+const SVC_DNS_KIBANA = process.env.SVC_DNS_KIBANA;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 const MAX_RETRIES = process.env.MAX_RETRIES && parseInt(process.env.MAX_RETRIES) || 10;
 let READINESS_PROBE = false;
@@ -99,6 +100,9 @@ function main() {
   }
   else if (process.env.SVC_DNS_VIDEO_STREAMING === undefined) {
     throw new Error('Please specify the service DNS in the environment variable SVC_DNS_VIDEO_STREAMING.');
+  }
+  else if (process.env.SVC_DNS_KIBANA === undefined) {
+    throw new Error('Please specify the service DNS in the environment variable SVC_DNS_KIBANA.');
   }
   //Display a message if any optional environment variables are missing.
   else {
@@ -458,6 +462,67 @@ app.post('/api/upload',
   ***/
   req.pipe(forwardReq);
 });
+
+
+
+
+
+
+/***
+Kibana.
+***/
+app.get('/kibana',
+(req, res) => {
+  const cid = randomUUID();
+  const videoId = req.query.id;
+  const ip = getIP(req);
+  logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: Kibana.`);
+  // try {
+  //   const geo = lookup(ip);
+  //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
+  // }
+  // catch {
+  //   logger.info(`${SVC_NAME} ${cid} - Unrecognizable IP: ${ip}`);
+  // }
+  //Get the selected video from the metadata microservice.
+  http.request({
+    host: SVC_DNS_KIBANA,
+    method: 'GET',
+    headers: {
+      'x-correlation-id': cid
+    }
+  },
+  (response) => {
+    let data = '';
+    response.on('data',
+    chunk => {
+      data += chunk;
+    });
+    // response.on('end',
+    // () => {
+    //   try {
+    //     const metadata = JSON.parse(data).video;
+    //     const video = { metadata, url: `/api/video?id=${videoId}` };
+    //     logger.info(`${SVC_NAME} ${cid} - Rendering the video ${metadata._id}`);
+    //     //Render the video for display in the browser.
+    //     res.render('play-video', { video });
+    //   }
+    //   catch {
+    //     logger.error(`${SVC_NAME} ${cid} - Failed to get details for video ${videoId}.`);
+    //   }
+    // });
+    response.on("error",
+    err => {
+      logger.error(`${SVC_NAME} ${cid} - Failed to get details for video ${videoId}.`);
+      logger.error(err || `${SVC_NAME} ${cid} - Status code: ${response.statusCode}`);
+      res.sendStatus(500);
+    });
+  })
+  .end();
+});
+
+
+
 
 /***
 The 404 Route
