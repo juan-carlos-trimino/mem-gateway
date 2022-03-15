@@ -487,7 +487,7 @@ app.get('/kibana',
   http.request({
     host: SVC_DNS_KIBANA,
     // path: '/app/kibana#/management',
-    method: 'POST',
+    method: 'GET',
     headers: {
       'x-correlation-id': cid
     }
