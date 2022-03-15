@@ -474,7 +474,6 @@ Kibana.
 app.get('/kibana',
 (req, res) => {
   const cid = randomUUID();
-  const videoId = req.query.id;
   const ip = getIP(req);
   logger.info(`${SVC_NAME} ${cid} - Received request from ${ip}: Kibana.`);
   // try {
@@ -498,19 +497,6 @@ app.get('/kibana',
     chunk => {
       data += chunk;
     });
-    // response.on('end',
-    // () => {
-    //   try {
-    //     const metadata = JSON.parse(data).video;
-    //     const video = { metadata, url: `/api/video?id=${videoId}` };
-    //     logger.info(`${SVC_NAME} ${cid} - Rendering the video ${metadata._id}`);
-    //     //Render the video for display in the browser.
-    //     res.render('play-video', { video });
-    //   }
-    //   catch {
-    //     logger.error(`${SVC_NAME} ${cid} - Failed to get details for video ${videoId}.`);
-    //   }
-    // });
     response.on("error",
     err => {
       logger.error(`${SVC_NAME} ${cid} - Failed to get details for video ${videoId}.`);
