@@ -485,19 +485,19 @@ app.get('/kibana',
   // }
   //Get the selected video from the metadata microservice.
   http.request({
-    host: `http://${SVC_DNS_KIBANA}`,
+    host: SVC_DNS_KIBANA,
       path: '/app/management/kibana',
-    // method: 'GET',
-    // headers: {
-    //   'x-correlation-id': cid
-    // }
+    method: 'GET',
+    headers: {
+      'x-correlation-id': cid
+    }
   },
   (response) => {
-    // let data = '';
-    // response.on('data',
-    // chunk => {
-    //   data += chunk;
-    // });
+    let data = '';
+    response.on('data',
+    chunk => {
+      data += chunk;
+    });
     response.on("error",
     err => {
       logger.error(`${SVC_NAME} ${cid} - Failed to get details for video ${videoId}.`);
