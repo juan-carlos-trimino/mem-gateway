@@ -36,9 +36,9 @@ continue.
 ***/
 process.on('uncaughtException',
 err => {
-  logger.error('Uncaught exception.', { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
-  logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
-  logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+  logger.error('Uncaught exception.', { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
+  logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
+  logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
 })
 
 /***
@@ -54,10 +54,15 @@ Abort and Restart
 
 //Winston requires at least one transport (location to save the log) to create a log.
 const logConfiguration = {
-  transports: [ new winston.transports.Console() ],
+  transports: [
+    new winston.transports.Console()
+  ],
   format: winston.format.combine(
-    winston.format.timestamp(), winston.format.json()
-  ),
+    winston.format.timestamp({
+        format: 'YYYY-MM-DD hh:mm:ss.SSS'
+      }),
+      winston.format.json()
+    ),
   exitOnError: false
 }
 
@@ -77,12 +82,12 @@ if (require.main === module) {
   main()
   .then(() => {
     READINESS_PROBE = true;
-    logger.info(`Microservice is listening on port ${PORT}!`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.info(`Microservice is listening on port ${PORT}!`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
   })
   .catch(err => {
-    logger.error('Microservice failed to start.', { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
-    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
-    logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.error('Microservice failed to start.', { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
+    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
+    logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
   });
 }
 
@@ -106,11 +111,11 @@ function main() {
   //Display a message if any optional environment variables are missing.
   else {
     if (process.env.PORT === undefined) {
-      logger.info(`The environment variable PORT for the HTTP server is missing; using port ${PORT}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+      logger.info(`The environment variable PORT for the HTTP server is missing; using port ${PORT}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
     }
     //
     if (process.env.MAX_RETRIES === undefined) {
-      logger.info(`The environment variable MAX_RETRIES is missing; using MAX_RETRIES=${MAX_RETRIES}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+      logger.info(`The environment variable MAX_RETRIES is missing; using MAX_RETRIES=${MAX_RETRIES}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
     }
   }
   //Notify when server has started.
@@ -162,7 +167,7 @@ function getIP(req) {
   }
   catch (err) {
     ip = null;
-    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
   }
   return ip;
 }
@@ -184,14 +189,14 @@ app.get('/readiness',
     }
     else {
       READINESS_PROBE = false;
-      logger.info(`Upstream dependency ${SVC_DNS_METADATA} not ready.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+      logger.info(`Upstream dependency ${SVC_DNS_METADATA} not ready.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
       res.sendStatus(500);
     }
   })
   .on('error',
   err => {
     READINESS_PROBE = false;
-    logger.info(`Upstream dependency ${SVC_DNS_METADATA} not ready.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.info(`Upstream dependency ${SVC_DNS_METADATA} not ready.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
     res.sendStatus(500);
   })
   .end();  //Finalize the request.
@@ -207,7 +212,7 @@ app.get('/',
 (req, res) => {
   const cid = randomUUID();
   const ip = getIP(req);
-  logger.info(`Received request from ${ip}: List the Videos.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+  logger.info(`Received request from ${ip}: List the Videos.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
   // try {
   //   const geo = lookup(ip);
   //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
@@ -264,15 +269,15 @@ app.get('/',
     });
     response.on('error',
     err => {
-      logger.error('Failed to retrieve the video collection.', { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
-      logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+      logger.error('Failed to retrieve the video collection.', { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
+      logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
       res.sendStatus(500);
     });
   })
   .on('error',
   err => {
-    logger.error('Failed to retrieve the video collection.', { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
-    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+    logger.error('Failed to retrieve the video collection.', { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
+    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
     res.sendStatus(500);
   })
   .end();
@@ -289,7 +294,7 @@ app.get('/video',
   const cid = randomUUID();
   const videoId = req.query.id;
   const ip = getIP(req);
-  logger.info(`Received request from ${ip}: Play Video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+  logger.info(`Received request from ${ip}: Play Video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
   // try {
   //   const geo = lookup(ip);
   //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
@@ -317,18 +322,18 @@ app.get('/video',
       try {
         const metadata = JSON.parse(data).video;
         const video = { metadata, url: `/api/video?id=${videoId}` };
-        logger.info(`Rendering the video ${metadata._id}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+        logger.info(`Rendering the video ${metadata._id}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
         //Render the video for display in the browser.
         res.render('play-video', { video });
       }
       catch {
-        logger.error(`Failed to get details for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+        logger.error(`Failed to get details for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
       }
     });
     response.on("error",
     err => {
-      logger.error(`Failed to get details for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
-      logger.error(err || `Status code: ${response.statusCode}`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+      logger.error(`Failed to get details for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
+      logger.error(err || `Status code: ${response.statusCode}`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
       res.sendStatus(500);
     });
   })
@@ -346,7 +351,7 @@ app.get('/history',
 (req, res) => {
   const cid = randomUUID();
   const ip = getIP(req);
-  logger.info(`Received request from ${ip}: Viewing History.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+  logger.info(`Received request from ${ip}: Viewing History.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
   // try {
   //   const geo = lookup(ip);
   //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
@@ -381,8 +386,8 @@ app.get('/history',
     });
     response.on('error',
     err => {
-      logger.error('Failed to retrieve the viewing history.', { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
-      logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+      logger.error('Failed to retrieve the viewing history.', { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
+      logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
       res.sendStatus(500);
     });
   })
@@ -394,7 +399,7 @@ app.get('/api/video',
 (req, res) => {
   const cid = randomUUID();
   const ip = getIP(req);
-  logger.info(`Received request from ${ip}: Streaming the Video ${req.query.id}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+  logger.info(`Received request from ${ip}: Streaming the Video ${req.query.id}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
   // try {
   //   const geo = lookup(ip);
   //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
@@ -433,7 +438,7 @@ app.post('/api/upload',
   ***/
   req.headers['x-correlation-id'] = cid;
   const ip = getIP(req);
-  logger.info(`Received request from ${ip}: Upload of the Video ${req.headers['file-name']}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+  logger.info(`Received request from ${ip}: Upload of the Video ${req.headers['file-name']}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
   // try {
   //   const geo = lookup(ip);
   //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
@@ -469,7 +474,7 @@ app.get('/kibana',
 (req, res) => {
   const cid = randomUUID();
   const ip = getIP(req);
-  logger.info(`Received request from ${ip}: Kibana.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+  logger.info(`Received request from ${ip}: Kibana.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
   // try {
   //   const geo = lookup(ip);
   //   logger.info(`${SVC_NAME} ${cid} - Request origination -> City: ${geo.city}, Region: ${geo.region}, Country: ${geo.country}, Timezone: ${geo.timezone}`);
@@ -494,8 +499,8 @@ app.get('/kibana',
     });
     response.on("error",
     err => {
-      logger.error(`Failed to get details for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
-      logger.error(err || `Status code: ${response.statusCode}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+      logger.error(`Failed to get details for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
+      logger.error(err || `Status code: ${response.statusCode}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
       res.sendStatus(500);
     });
   })
@@ -513,6 +518,6 @@ the stack (below all other functions) to handle a 404 response.
 ***/
 app.use(
 (req, res, next) => {
-  logger.error(`Unable to find the requested resource (${req.url})!`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+  logger.error(`Unable to find the requested resource (${req.url})!`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
   res.status(404).send(`<h1>Unable to find the requested resource (${req.url})!</h1>`);
 });
